@@ -129,7 +129,7 @@ services:
       - DB_USER=konga
       - DB_PASSWORD=konga
       - DB_DATABASE=konga
-      - NODE_ENV=production
+      - NODE_ENV=development
     networks:
       - app-network
     depends_on:
@@ -137,7 +137,7 @@ services:
         condition: service_healthy
 
   konga-database:
-    image: postgres:13
+    image: postgres:11
     environment:
       POSTGRES_DB: konga
       POSTGRES_USER: konga
