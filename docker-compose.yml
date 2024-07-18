@@ -200,6 +200,7 @@ services:
     depends_on:
       - postgres
       - redis
+      - book-service
     networks:  
       - app-network
 
