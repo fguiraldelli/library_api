@@ -1,0 +1,161 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:13
+    restart: on-failure
+    environment:
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: appdb
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./data:/docker-entrypoint-initdb.d
+    networks:  
+      - app-network
+
+  redis:
+    image: redis:6.2
+    networks:  
+      - app-network
+  
+  keycloak-database:
+    image: postgres:13
+    restart: on-failure
+    environment:
+      POSTGRES_USER: keycloak
+      POSTGRES_PASSWORD: keycloakpassword
+      POSTGRES_DB: keycloakdb
+    volumes:
+      - keycloak_data:/var/lib/postgresql/data
+      - ./data:/docker-entrypoint-initdb.d
+    networks:
+      - app-network
+
+  keycloak:
+    image: keycloak/keycloak:latest
+    restart: on-failure
+    environment:
+      DB_VENDOR: POSTGRES
+      DB_ADDR: keycloak-database
+      DB_DATABASE: keycloakdb
+      DB_USER: keycloak
+      DB_PASSWORD: keycloakpassword
+      KEYCLOAK_ADMIN: admin
+      KEYCLOAK_ADMIN_PASSWORD: admin
+    ports:
+      - "8080:8080"
+    depends_on:
+      - keycloak-database
+    networks:
+      - app-network
+    command:
+      - start-dev
+
+  kong-database:
+    image: postgres:13
+    restart: on-failure
+    environment:
+      POSTGRES_USER: kong
+      POSTGRES_PASSWORD: kongpassword
+      POSTGRES_DB: kong
+      POSTGRES_HOST_AUTH_METHOD: trust
+    volumes:
+      - kong_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD", "pg_isready", "-U", "kong"]
+      interval: 30s
+      timeout: 30s
+      retries: 3
+    networks:
+      - app-network
+
+  kong-migrations:
+    image: kong:latest
+    restart: on-failure
+    depends_on:
+      - kong-database
+    environment:
+      KONG_DATABASE: postgres
+      KONG_PG_HOST: kong-database
+      KONG_PG_PASSWORD: kongpassword
+      KONG_CASSANDRA_CONTACT_POINTS: kong-database
+    command: ["kong", "migrations", "bootstrap"]
+    networks:
+      - app-network
+
+  kong:
+    build:
+      context: .
+      dockerfile: kong/Dockerfile
+    restart: on-failure
+    environment:
+      KONG_DATABASE: postgres
+      KONG_PG_HOST: kong-database
+      KONG_PG_PASSWORD: kongpassword
+      KONG_PROXY_ACCESS_LOG: /dev/stdout
+      KONG_ADMIN_ACCESS_LOG: /dev/stdout
+      KONG_PROXY_ERROR_LOG: /dev/stderr
+      KONG_ADMIN_ERROR_LOG: /dev/stderr
+      KONG_ADMIN_LISTEN: 0.0.0.0:8001, 0.0.0.0:8444 ssl
+      KONG_DECLARATIVE_CONFIG: /usr/local/kong/declarative/kong.yml
+    ports:
+      - 8000:8000
+      - 8443:8443
+      - 8001:8001
+      - 8444:8444
+    depends_on:
+      - kong-migrations
+      - keycloak
+    networks:
+      - app-network
+
+  book-service:
+    build: ./book-service
+    ports:
+      - "9001:9001"
+    restart: on-failure
+    environment:
+      - PYTHONUNBUFFERED=1
+      - DATABASE_URL=postgresql://user:password@db:5432/appdb
+    depends_on:
+      - postgres
+      - redis
+    networks:  
+      - app-network
+
+  loan-service:
+    build: ./loan-service
+    ports:
+      - "9002:9002"
+    restart: on-failure
+    environment:
+      - PYTHONUNBUFFERED=1
+      - DATABASE_URL=postgresql://user:password@db:5432/appdb
+    depends_on:
+      - postgres
+      - redis
+    networks:  
+      - app-network
+
+  jaeger:
+    image: jaegertracing/all-in-one:1.22
+    restart: on-failure
+    ports:
+      - "6831:6831/udp"
+      - "16686:16686"
+    networks:  
+      - app-network
+
+volumes:
+  postgres_data:
+    driver: local
+  kong_data:
+    driver: local
+  keycloak_data:
+    driver: local
+
+networks:  
+  app-network:  
+    driver: bridge
+    external: true

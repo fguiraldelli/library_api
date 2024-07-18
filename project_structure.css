@@ -1,0 +1,24 @@
+library-app/
+│
+├── docker-compose.yml
+├── kong/
+│   ├── kong.yml
+│   └── Dockerfile
+├── book-service/
+│   ├── app/
+│   │   ├── main.py
+│   │   ├── crud.py
+│   │   ├── models.py
+│   │   ├── schemas.py
+│   │   └── database.py
+│   ├── requirements.txt
+│   └── Dockerfile
+├── loan-service/
+│   ├── app/
+│   │   ├── main.py
+│   │   ├── crud.py
+│   │   ├── models.py
+│   │   ├── schemas.py
+│   │   └── database.py
+│   ├── requirements.txt
+│   └── Dockerfile

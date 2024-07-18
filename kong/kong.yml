@@ -1,0 +1,21 @@
+_format_version: "3.0"
+_transform: true
+
+services:
+  - name: book-service
+    url: http://book-service:9001
+    plugins:
+      - name: key-auth
+    routes:
+      - name: book-route
+        paths:
+          - /books
+
+  - name: loan-service
+    url: http://loan-service:9002
+    plugins:
+      - name: key-auth
+    routes:
+      - name: loan-route
+        paths:
+          - /loans
