@@ -8,6 +8,9 @@ services:
       POSTGRES_USER: user
       POSTGRES_PASSWORD: password
       POSTGRES_DB: appdb
+      POSTGRES_HOST_AUTH_METHOD: trust
+    # ports:
+    #   - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
       - ./data:/docker-entrypoint-initdb.d
@@ -18,7 +21,7 @@ services:
     image: redis:6.2
     networks:  
       - app-network
-  
+
   keycloak-database:
     image: postgres:13
     restart: on-failure
@@ -26,6 +29,9 @@ services:
       POSTGRES_USER: keycloak
       POSTGRES_PASSWORD: keycloakpassword
       POSTGRES_DB: keycloakdb
+      POSTGRES_HOST_AUTH_METHOD: trust
+    ports:
+      - 5434:5432
     volumes:
       - keycloak_data:/var/lib/postgresql/data
       - ./data:/docker-entrypoint-initdb.d
@@ -44,7 +50,7 @@ services:
       KEYCLOAK_ADMIN: admin
       KEYCLOAK_ADMIN_PASSWORD: admin
     ports:
-      - "8080:8080"
+      - 8080:8080
     depends_on:
       - keycloak-database
     networks:
@@ -60,6 +66,8 @@ services:
       POSTGRES_PASSWORD: kongpassword
       POSTGRES_DB: kong
       POSTGRES_HOST_AUTH_METHOD: trust
+    ports:
+      - 5433:5432
     volumes:
       - kong_data:/var/lib/postgresql/data
     healthcheck:
@@ -75,6 +83,8 @@ services:
     restart: on-failure
     depends_on:
       - kong-database
+      - book-service
+      - loan-service
     environment:
       KONG_DATABASE: postgres
       KONG_PG_HOST: kong-database
@@ -110,10 +120,56 @@ services:
     networks:
       - app-network
 
+  # konga:
+  #   image: pantsel/konga:latest
+  #   environment:
+  #     # DB_POOLSIZE: 10
+  #     DB_URI: postgres://konga:konga@konga-database:5432/konga
+  #   restart: on-failure
+  #   ports:
+  #     - "1337:1337"
+  #   depends_on:
+  #     - kong
+  #     - konga-database
+  #   networks:
+  #     - app-network
+
+  konga:
+    image: pantsel/konga:latest
+    ports:
+      - "1337:1337"
+    environment:
+      - DB_ADAPTER=postgres
+      - DB_HOST=konga-database
+      - DB_PORT=5432
+      - DB_USER=konga
+      - DB_PASSWORD=konga
+      - DB_DATABASE=konga
+      - NODE_ENV=production
+    networks:
+      - app-network
+    depends_on:
+      - konga-database
+
+  konga-database:
+    image: postgres:13
+    environment:
+      POSTGRES_DB: konga
+      POSTGRES_USER: konga
+      POSTGRES_PASSWORD: konga
+      POSTGRES_HOST_AUTH_METHOD: trust
+    restart: on-failure
+    # ports:
+    #   - "5435:5432"
+    volumes:
+      - konga_data:/var/lib/postgresql/data
+    networks:
+      - app-network
+
   book-service:
     build: ./book-service
     ports:
-      - "9001:9001"
+      - 9001:9001
     restart: on-failure
     environment:
       - PYTHONUNBUFFERED=1
@@ -127,7 +183,7 @@ services:
   loan-service:
     build: ./loan-service
     ports:
-      - "9002:9002"
+      - 9002:9002
     restart: on-failure
     environment:
       - PYTHONUNBUFFERED=1
@@ -142,8 +198,8 @@ services:
     image: jaegertracing/all-in-one:1.22
     restart: on-failure
     ports:
-      - "6831:6831/udp"
-      - "16686:16686"
+      - 6831:6831/udp
+      - 16686:16686
     networks:  
       - app-network
 
@@ -153,6 +209,8 @@ volumes:
   kong_data:
     driver: local
   keycloak_data:
+    driver: local
+  konga_data:
     driver: local
 
 networks:  
