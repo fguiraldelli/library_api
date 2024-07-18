@@ -4,18 +4,18 @@ _transform: true
 services:
   - name: book-service
     url: http://book-service:9001
-    plugins:
-      - name: key-auth
     routes:
       - name: book-route
         paths:
           - /books
+    plugins:
+      - name: key-auth
 
   - name: loan-service
     url: http://loan-service:9002
-    plugins:
-      - name: key-auth
     routes:
       - name: loan-route
         paths:
           - /loans
+    plugins:
+      - name: key-auth
