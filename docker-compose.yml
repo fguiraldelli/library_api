@@ -9,8 +9,6 @@ services:
       POSTGRES_PASSWORD: password
       POSTGRES_DB: appdb
       POSTGRES_HOST_AUTH_METHOD: trust
-    # ports:
-    #   - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
       - ./data:/docker-entrypoint-initdb.d
@@ -120,20 +118,6 @@ services:
     networks:
       - app-network
 
-  # konga:
-  #   image: pantsel/konga:latest
-  #   environment:
-  #     # DB_POOLSIZE: 10
-  #     DB_URI: postgres://konga:konga@konga-database:5432/konga
-  #   restart: on-failure
-  #   ports:
-  #     - "1337:1337"
-  #   depends_on:
-  #     - kong
-  #     - konga-database
-  #   networks:
-  #     - app-network
-
   konga:
     image: pantsel/konga:latest
     ports:
@@ -149,7 +133,8 @@ services:
     networks:
       - app-network
     depends_on:
-      - konga-database
+      konga-database:
+        condition: service_healthy
 
   konga-database:
     image: postgres:13
@@ -159,10 +144,13 @@ services:
       POSTGRES_PASSWORD: konga
       POSTGRES_HOST_AUTH_METHOD: trust
     restart: on-failure
-    # ports:
-    #   - "5435:5432"
     volumes:
       - konga_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U konga"]
+      interval: 30s
+      timeout: 30s
+      retries: 5
     networks:
       - app-network
 
@@ -216,4 +204,3 @@ volumes:
 networks:  
   app-network:  
     driver: bridge
-    external: true
