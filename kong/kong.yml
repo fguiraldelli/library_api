@@ -9,7 +9,22 @@ services:
         paths:
           - /books
     plugins:
-      - name: key-auth
+      - name: oauth2
+        config:
+          scopes: 
+            - "read:books"
+            - "write:books"
+          mandatory_scope: true
+          enable_authorization_code: true
+          enable_client_credentials: true
+          enable_implicit_grant: false
+          enable_password_grant: true
+          token_expiration: 36000  # 1 hour token expiration
+          refresh_token_ttl: 1209600  # 2 weeks refresh token expiration
+          auth_header_name: authorization
+          global_credentials: true
+          hide_credentials: false
+
 
   - name: loan-service
     url: http://loan-service:9002
@@ -19,3 +34,16 @@ services:
           - /loans
     plugins:
       - name: key-auth
+
+consumers:
+  - username: user-cli
+    # keyauth_credentials:
+    # - key: my-key
+
+oauth2_credentials:
+  - name: user-cli
+    client_id: user-cli
+    client_secret: zxiVm1tei3vGpmDgS0mqWEkTEIOWddct
+    # redirect_uris:
+    #   - "http://your_redirect_uri"  # Ajuste para o URI de redirecionamento apropriado
+    consumer: user-cli

@@ -26,7 +26,7 @@ ENV PORT=8000
 EXPOSE 8000
 
 ENTRYPOINT ["/docker-entrypoint.sh"]
-CMD ["kong", "docker-start"]
+CMD ["kong", "docker-start", "--vv"]
 
 #Revertendo para o usuário padrão do Kong se necessário
 USER kong

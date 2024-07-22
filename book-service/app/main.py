@@ -21,7 +21,7 @@ keycloak_openid = KeycloakOpenID(
     server_url="http://keycloak:8080/auth/",
     client_id="user-cli",
     realm_name="library",
-    client_secret_key="zErK46fRV2YS5YGOLp5KsoK30mlHeSGQ"
+    client_secret_key="zxiVm1tei3vGpmDgS0mqWEkTEIOWddct"
 )
 
 # Configuração do OpenTelemetry para rastreabilidade
