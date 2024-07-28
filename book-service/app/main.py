@@ -1,4 +1,6 @@
 from fastapi import FastAPI, Depends, HTTPException
+from fastapi.security import OAuth2PasswordBearer
+from fastapi import Security
 from sqlalchemy.orm import Session
 from typing import List
 from keycloak import KeycloakOpenID
@@ -18,10 +20,10 @@ app = FastAPI()
 
 # Configuração do Keycloak
 keycloak_openid = KeycloakOpenID(
-    server_url="http://keycloak:8080/auth/",
+    server_url="http://keycloak:8080/",
     client_id="user-cli",
     realm_name="library",
-    client_secret_key="zErK46fRV2YS5YGOLp5KsoK30mlHeSGQ"
+    client_secret_key="bNWjEoGCA16IndaVQv4JvxEM58K0YS6A"
 )
 
 # Configuração do OpenTelemetry para rastreabilidade
@@ -48,33 +50,47 @@ def get_db():
         yield db
     finally:
         db.close()
+        
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
+
+print(f"\nDEUBUG::::: oauth2_scheme:{oauth2_scheme} ::::::\n")
+
+def get_current_user(token: str = Security(oauth2_scheme)):
+    try:
+        print(f"\nDEUBUG::::: token:{token} ::::::\n")
+        userinfo = keycloak_openid.userinfo(token)
+        print(f"\nDEUBUG::::: token:{userinfo} ::::::\n")
+        return userinfo
+    except:
+        raise HTTPException(status_code=401, detail=f"\nInvalid token-->{token}\n\n")
+
 
 # Endpoints do serviço de livros
-@app.post("/books/", response_model=schemas.Book)
-def create_book(book: schemas.BookCreate, db: Session = Depends(get_db)):
-    return crud.create_book(db=db, book=book)
-
 @app.get("/books/", response_model=List[schemas.Book])
-def read_books(skip: int = 0, limit: int = 10, db: Session = Depends(get_db)):
+def read_books(skip: int = 0, limit: int = 10, db: Session = Depends(get_db), current_user: dict = Depends(get_current_user)):
     books = crud.get_books(db, skip=skip, limit=limit)
     return books
 
 @app.get("/books/{book_id}", response_model=schemas.Book)
-def read_book(book_id: int, db: Session = Depends(get_db)):
+def read_book(book_id: int, db: Session = Depends(get_db), current_user: dict = Depends(get_current_user)):
     db_book = crud.get_book(db, book_id=book_id)
     if db_book is None:
         raise HTTPException(status_code=404, detail="Book not found")
     return db_book
 
+@app.post("/books/", response_model=schemas.Book)
+def create_book(book: schemas.BookCreate, db: Session = Depends(get_db), current_user: dict = Depends(get_current_user)):
+    return crud.create_book(db=db, book=book)
+
 @app.delete("/books/{book_id}", response_model=schemas.Book)
-def delete_book(book_id: int, db: Session = Depends(get_db)):
+def delete_book(book_id: int, db: Session = Depends(get_db), current_user: dict = Depends(get_current_user)):
     db_book = crud.delete_book(db, book_id=book_id)
     if db_book is None:
         raise HTTPException(status_code=404, detail="Book not found")
     return db_book
 
 @app.put("/books/{book_id}", response_model=schemas.Book)
-def update_book(book_id: int, book: schemas.BookUpdate, db: Session = Depends(get_db)):
+def update_book(book_id: int, book: schemas.BookUpdate, db: Session = Depends(get_db), current_user: dict = Depends(get_current_user)):
     db_book = crud.update_book(db, book_id=book_id, book=book)
     if db_book is None:
         raise HTTPException(status_code=404, detail="Book not found")

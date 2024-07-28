@@ -87,3 +87,10 @@ docker-compose ps
 ### Conclusão
 
 Se os passos acima não resolverem o problema, por favor, forneça o conteúdo completo do seu `docker-compose.yml` para uma análise mais detalhada. Isso ajudará a identificar qualquer problema específico na configuração que possa estar causando o erro.
+
+```(base) fguira@fguira-MS-7D22:~$ openssl rand -base64 20
+EowN6j7J7tpZlLcieF8JjBpD1Ig=
+(base) fguira@fguira-MS-7D22:~$ openssl rand -base64 20
+EuoPMD+3kftY+dxLjwaX2SxOpzs=
+(base) fguira@fguira-MS-7D22:~$
+```

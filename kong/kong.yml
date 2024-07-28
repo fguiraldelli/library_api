@@ -1,3 +1,17 @@
+#  _format_version: "3.0"
+#  _transform: true
+
+#  services:
+#  - host: loan-service
+#    name: loan_service
+#    port: 9002
+#    protocol: http
+#    routes:
+#    - name: loan_route
+#      paths:
+#      - /loans/
+#      strip_path: false
+
 _format_version: "3.0"
 _transform: true
 
@@ -7,15 +21,71 @@ services:
     routes:
       - name: book-route
         paths:
-          - /books
-    plugins:
-      - name: key-auth
+          - /books/
+        strip_path: false
+
+    # plugins:
+    #   - name: oidc
+    #     config:
+    #       client_id: user-cli
+    #       client_secret: bNWjEoGCA16IndaVQv4JvxEM58K0YS6A
+    #       bearer_only: "yes"
+    #       realm: library
+    #       introspection_endpoint: http://keycloak:8080/realms/library/protocol/openid-connect/token/introspect
+    #       discovery: http://keycloak:8080/realms/library/.well-known/openid-configuration
+    #       redirect_uri: http://kong:8000/callback
+    #       scope: openid email profile
+    #       ssl_verify: "false"
 
   - name: loan-service
     url: http://loan-service:9002
     routes:
       - name: loan-route
         paths:
-          - /loans
-    plugins:
-      - name: key-auth
+          - /loans/
+        strip_path: false
+    # plugins:
+    #   - name: oidc
+    #     config:
+    #       client_id: user-cli
+    #       client_secret: bNWjEoGCA16IndaVQv4JvxEM58K0YS6A
+    #       bearer_only: "yes"
+    #       realm: library
+    #       introspection_endpoint: http://keycloak:8080/realms/library/protocol/openid-connect/token/introspect
+    #       discovery: http://keycloak:8080/realms/library/.well-known/openid-configuration
+    #       redirect_uri: http://kong:8000/callback
+    #       scope: openid email profile
+    #       ssl_verify: "false"
+
+
+  - name: keycloak-service
+    url: http://keycloak:8080/realms/library/protocol/openid-connect/token/
+    routes:
+      - name: keycloak-token-route
+        paths:
+          - /realms/library/protocol/openid-connect/token/
+          - /keycloak/token/
+          - /token/
+  #       strip_path: false
+  #   plugins:
+  #     - name: request-transformer
+  #       service: keycloak-service
+  #       config:
+  #         http_method: POST
+    #       add:
+    #         headers:
+    #           - "Content-Type: application/x-www-form-urlencoded"
+
+# consumers:
+#   - username: user-cli
+#     keyauth_credentials:
+#     - key: EowN6j7J7tpZlLcieF8JjBpD1Ig=
+
+# oauth2_credentials:
+#   - name: user-cli
+#     client_id: user-cli
+#     client_secret: bNWjEoGCA16IndaVQv4JvxEM58K0YS6A
+#     consumer: user-cli
+
+# keyauth_credentials:
+#   - consumer: user-cli
