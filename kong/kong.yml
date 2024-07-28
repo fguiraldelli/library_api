@@ -1,3 +1,17 @@
+#  _format_version: "3.0"
+#  _transform: true
+
+#  services:
+#  - host: loan-service
+#    name: loan_service
+#    port: 9002
+#    protocol: http
+#    routes:
+#    - name: loan_route
+#      paths:
+#      - /loans/
+#      strip_path: false
+
 _format_version: "3.0"
 _transform: true
 
@@ -7,43 +21,71 @@ services:
     routes:
       - name: book-route
         paths:
-          - /books
-    plugins:
-      - name: oauth2
-        config:
-          scopes: 
-            - "read:books"
-            - "write:books"
-          mandatory_scope: true
-          enable_authorization_code: true
-          enable_client_credentials: true
-          enable_implicit_grant: false
-          enable_password_grant: true
-          token_expiration: 36000  # 1 hour token expiration
-          refresh_token_ttl: 1209600  # 2 weeks refresh token expiration
-          auth_header_name: authorization
-          global_credentials: true
-          hide_credentials: false
+          - /books/
+        strip_path: false
 
+    # plugins:
+    #   - name: oidc
+    #     config:
+    #       client_id: user-cli
+    #       client_secret: bNWjEoGCA16IndaVQv4JvxEM58K0YS6A
+    #       bearer_only: "yes"
+    #       realm: library
+    #       introspection_endpoint: http://keycloak:8080/realms/library/protocol/openid-connect/token/introspect
+    #       discovery: http://keycloak:8080/realms/library/.well-known/openid-configuration
+    #       redirect_uri: http://kong:8000/callback
+    #       scope: openid email profile
+    #       ssl_verify: "false"
 
   - name: loan-service
     url: http://loan-service:9002
     routes:
       - name: loan-route
         paths:
-          - /loans
-    plugins:
-      - name: key-auth
+          - /loans/
+        strip_path: false
+    # plugins:
+    #   - name: oidc
+    #     config:
+    #       client_id: user-cli
+    #       client_secret: bNWjEoGCA16IndaVQv4JvxEM58K0YS6A
+    #       bearer_only: "yes"
+    #       realm: library
+    #       introspection_endpoint: http://keycloak:8080/realms/library/protocol/openid-connect/token/introspect
+    #       discovery: http://keycloak:8080/realms/library/.well-known/openid-configuration
+    #       redirect_uri: http://kong:8000/callback
+    #       scope: openid email profile
+    #       ssl_verify: "false"
 
-consumers:
-  - username: user-cli
-    # keyauth_credentials:
-    # - key: my-key
 
-oauth2_credentials:
-  - name: user-cli
-    client_id: user-cli
-    client_secret: zxiVm1tei3vGpmDgS0mqWEkTEIOWddct
-    # redirect_uris:
-    #   - "http://your_redirect_uri"  # Ajuste para o URI de redirecionamento apropriado
-    consumer: user-cli
+  - name: keycloak-service
+    url: http://keycloak:8080/realms/library/protocol/openid-connect/token/
+    routes:
+      - name: keycloak-token-route
+        paths:
+          - /realms/library/protocol/openid-connect/token/
+          - /keycloak/token/
+          - /token/
+  #       strip_path: false
+  #   plugins:
+  #     - name: request-transformer
+  #       service: keycloak-service
+  #       config:
+  #         http_method: POST
+    #       add:
+    #         headers:
+    #           - "Content-Type: application/x-www-form-urlencoded"
+
+# consumers:
+#   - username: user-cli
+#     keyauth_credentials:
+#     - key: EowN6j7J7tpZlLcieF8JjBpD1Ig=
+
+# oauth2_credentials:
+#   - name: user-cli
+#     client_id: user-cli
+#     client_secret: bNWjEoGCA16IndaVQv4JvxEM58K0YS6A
+#     consumer: user-cli
+
+# keyauth_credentials:
+#   - consumer: user-cli

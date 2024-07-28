@@ -1,3 +1,4 @@
+import uvicorn
 from fastapi import FastAPI, Depends, HTTPException
 from sqlalchemy.orm import Session
 from typing import List
@@ -19,7 +20,7 @@ keycloak_openid = KeycloakOpenID(
     server_url="http://keycloak:8080/auth/",
     client_id="user-cli",
     realm_name="library",
-    client_secret_key="zxiVm1tei3vGpmDgS0mqWEkTEIOWddct"
+    client_secret_key="bNWjEoGCA16IndaVQv4JvxEM58K0YS6A"
 )
 
 trace.set_tracer_provider(
@@ -60,3 +61,6 @@ def secure_data(token: str):
         return userinfo
     except:
         raise HTTPException(status_code=401, detail="Invalid token")
+
+if __name__ == "__main__":
+    uvicorn.run(app, host="127.0.0.1", port=9002)
